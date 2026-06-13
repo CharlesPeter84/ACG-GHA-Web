@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'terraform/**'
+      - '.github/workflows/deploy-ec2.yml'
 
 jobs:
   terraform:
