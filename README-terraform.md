@@ -13,9 +13,8 @@ Setup steps:
    - `AWS_ACCESS_KEY_ID`
    - `AWS_SECRET_ACCESS_KEY`
    - `AWS_REGION` (e.g., `us-east-1`)
-+  - `TF_S3_BUCKET` (S3 bucket to store Terraform state)
-+  - `TF_STATE_KEY` (object key, e.g. `state/terraform.tfstate`)
-+  - `TF_DYNAMODB_TABLE` (DynamoDB table name for state locking)
+    - `TF_S3_BUCKET` (S3 bucket to store Terraform state)
+    - `TF_DYNAMODB_TABLE` (DynamoDB table name for state locking)
 
 2. (Optional) If you want SSH access, create or use an existing EC2 Key Pair name and set it by creating a repository secret named `TF_VAR_ssh_key_name` or update `terraform/variables.tf`.
 
@@ -31,12 +30,11 @@ aws dynamodb create-table --table-name my-terraform-locks --attribute-definition
 ```bash
 cd terraform
 terraform init -backend-config="bucket=my-terraform-state-bucket" \
-  -backend-config="key=state/terraform.tfstate" \
   -backend-config="region=us-east-1" \
   -backend-config="dynamodb_table=my-terraform-locks"
 ```
 
-5. Commit and push to `main`. The workflow will use the repository secrets `TF_S3_BUCKET`, `TF_STATE_KEY`, and `TF_DYNAMODB_TABLE` to configure the backend during `terraform init`.
+5. Commit and push to `main`. The workflow will use the repository secrets `TF_S3_BUCKET` and `TF_DYNAMODB_TABLE` to configure the backend during `terraform init`. The state object key is fixed to `state/terraform.tfstate`.
 
 Notes:
 - The workflow runs `terraform apply -auto-approve`. For production, consider requiring manual approval.
