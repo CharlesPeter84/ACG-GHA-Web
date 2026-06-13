@@ -74,6 +74,9 @@ jobs:
         working-directory: ./terraform
         run: terraform apply -input=false -auto-approve tfplan
 
+      - name: Generate Terraform JSON output
+        run: terraform -chdir=terraform output -json > "${{ github.workspace }}/terraform_output.json"
+
       - name: Install Ansible
         run: |
           python3 -m pip install --quiet ansible
@@ -82,6 +85,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ANSIBLE_HOST_KEY_CHECKING: 'False'
+          TERRAFORM_OUTPUT_JSON: "${{ github.workspace }}/terraform_output.json"
         run: |
           chmod +x scripts/run_ansible.sh
           ./scripts/run_ansible.sh

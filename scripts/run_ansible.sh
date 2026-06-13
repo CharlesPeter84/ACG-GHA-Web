@@ -9,19 +9,17 @@ printf '%s\n' "$SSH_PRIVATE_KEY" > /tmp/ansible/ssh_key
 chmod 600 /tmp/ansible/ssh_key
 
 # get instance IP via terraform output using jq or grep fallback
+TERRAFORM_OUTPUT_JSON=${TERRAFORM_OUTPUT_JSON:-terraform_output.json}
 IP=""
+if [ ! -f "$TERRAFORM_OUTPUT_JSON" ]; then
+  echo "Error: Terraform JSON output file is missing: $TERRAFORM_OUTPUT_JSON"
+  echo "Ensure the workflow generates the file before running this script."
+  exit 1
+fi
+
 # dump raw terraform output for debugging (masked later)
 echo "--- Terraform raw JSON output ---"
-set +x
-terraform -chdir=terraform output -json > /tmp/terraform_output.json 2> /tmp/terraform_output.err || true
-set -x
-cat /tmp/terraform_output.json || true
-
-# print any terraform stderr wrapper/debug output separately
-if [ -s /tmp/terraform_output.err ]; then
-  echo '--- Terraform stderr output ---'
-  cat /tmp/terraform_output.err || true
-fi
+cat "$TERRAFORM_OUTPUT_JSON" || true
 
 # validate that the JSON output file contains only JSON and no surrounding text
 if ! command -v jq >/dev/null 2>&1; then
@@ -40,20 +38,13 @@ echo '--- Terraform parsed JSON output ---'
 jq . /tmp/terraform_output.json || true
 
 if command -v jq >/dev/null 2>&1; then
-  IP=$(jq -r '.web_instance_public_ip.value // .web_instance_public_ip // ""' /tmp/terraform_output.json 2>/dev/null || true)
+  IP=$(jq -r '.web_instance_public_ip.value // .web_instance_public_ip // ""' "$TERRAFORM_OUTPUT_JSON" 2>/dev/null || true)
   IP=$(printf '%s' "$IP" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' || true)
 fi
 if [ -z "$IP" ]; then
-  # fallback to raw terraform output (non-json)
-  terraform -chdir=terraform output > /tmp/terraform_output_raw.txt 2>&1 || true
-  echo "--- Terraform raw text output ---"
-  cat /tmp/terraform_output_raw.txt || true
-  IP=$(grep -Eo '([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)' /tmp/terraform_output_raw.txt | head -n1 || true)
-fi
-
-if [ -z "$IP" ]; then
-  echo "Error: terraform output 'web_instance_public_ip' is empty. Ensure Terraform applied and output exists."
-  terraform -chdir=terraform output || true
+  echo "Error: terraform output 'web_instance_public_ip' is empty or missing in $TERRAFORM_OUTPUT_JSON."
+  echo "Ensure the workflow generated the JSON output before running this script."
+  jq . "$TERRAFORM_OUTPUT_JSON" || true
   exit 1
 fi
 if ! printf '%s' "$IP" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' >/dev/null; then
