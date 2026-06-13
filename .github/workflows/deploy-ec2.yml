@@ -66,12 +66,10 @@ jobs:
             -backend-config="dynamodb_table=${{ secrets.TF_DYNAMODB_TABLE }}"
 
       - name: Terraform Plan
-        if: steps.changed-paths.outputs.terraform == 'true'
         working-directory: ./terraform
         run: terraform plan -input=false -out=tfplan
 
       - name: Terraform Apply
-        if: steps.changed-paths.outputs.terraform == 'true'
         working-directory: ./terraform
         run: terraform apply -input=false -auto-approve tfplan
 
