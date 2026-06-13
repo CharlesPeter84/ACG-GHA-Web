@@ -26,16 +26,16 @@ if ! command -v jq >/dev/null 2>&1; then
   echo 'Error: jq is required to validate terraform JSON output.'
   exit 1
 fi
-if ! jq -e . /tmp/terraform_output.json >/dev/null 2>&1; then
+if ! jq -e . "$TERRAFORM_OUTPUT_JSON" >/dev/null 2>&1; then
   echo 'Error: terraform JSON output file is not pure JSON.'
   echo '--- Terraform raw JSON output  ---'
-  cat /tmp/terraform_output.json || true
+  cat "$TERRAFORM_OUTPUT_JSON" || true
   echo '--- Terraform raw JSON output Ends---'
   exit 1
 fi
 
 echo '--- Terraform parsed JSON output ---'
-jq . /tmp/terraform_output.json || true
+jq . "$TERRAFORM_OUTPUT_JSON" || true
 
 if command -v jq >/dev/null 2>&1; then
   IP=$(jq -r '.web_instance_public_ip.value // .web_instance_public_ip // ""' "$TERRAFORM_OUTPUT_JSON" 2>/dev/null || true)
