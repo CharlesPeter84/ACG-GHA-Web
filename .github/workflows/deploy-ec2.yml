@@ -77,6 +77,12 @@ jobs:
       - name: Generate Terraform JSON output
         run: terraform -chdir=terraform output -json > "${{ github.workspace }}/terraform_output.json"
 
+      - name: Print Terraform JSON output
+        run: |
+          echo '--- terraform_output.json ---'
+          cat "${{ github.workspace }}/terraform_output.json"
+          echo '--- end terraform_output.json ---'
+
       - name: Install Ansible
         run: |
           python3 -m pip install --quiet ansible
