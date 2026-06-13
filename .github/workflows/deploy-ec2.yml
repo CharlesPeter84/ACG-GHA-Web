@@ -30,7 +30,6 @@ jobs:
         run: |
           terraform init -input=false \
             -backend-config="bucket=${{ secrets.TF_S3_BUCKET }}" \
-            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
             -backend-config="region=${{ secrets.AWS_REGION }}" \
             -backend-config="dynamodb_table=${{ secrets.TF_DYNAMODB_TABLE }}"
 
