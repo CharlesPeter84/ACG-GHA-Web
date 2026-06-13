@@ -84,9 +84,21 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ANSIBLE_HOST_KEY_CHECKING: 'False'
         run: |
+          set -euo pipefail
           mkdir -p /tmp/ansible
           printf '%s\n' "$SSH_PRIVATE_KEY" > /tmp/ansible/ssh_key
           chmod 600 /tmp/ansible/ssh_key
-          IP=$(terraform -chdir=terraform output -raw web_instance_public_ip)
+          # get instance IP (raw). If missing or not an IPv4, fail with helpful debug output.
+          IP=$(terraform -chdir=terraform output -raw web_instance_public_ip 2>/dev/null || true)
+          if [ -z "$IP" ]; then
+            echo "Error: terraform output 'web_instance_public_ip' is empty. Ensure Terraform applied and output exists."
+            terraform -chdir=terraform output || true
+            exit 1
+          fi
+          if ! printf '%s' "$IP" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' >/dev/null; then
+            echo "Error: terraform output did not return a valid IPv4 address: '$IP'"
+            terraform -chdir=terraform output || true
+            exit 1
+          fi
           printf "[webservers]\nec2 ansible_host=%s ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key\n" "$IP" > /tmp/ansible/inventory.ini
           ansible-playbook -i /tmp/ansible/inventory.ini ansible/playbook.yml
