@@ -90,19 +90,7 @@ jobs:
           chmod 600 /tmp/ansible/ssh_key
           # get instance IP via terraform json output and parse safely with python
           OUTPUT_JSON=$(terraform -chdir=terraform output -json 2>/dev/null || true)
-          IP=$(printf '%s' "$OUTPUT_JSON" | python3 - <<'PY'
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    v = data.get('web_instance_public_ip')
-    if isinstance(v, dict):
-        print(v.get('value',''))
-    else:
-        print(v or '')
-except Exception:
-    print('', end='')
-PY
-)
+          IP=$(printf '%s' "$OUTPUT_JSON" | python3 scripts/parse_tf_output.py)
           if [ -z "$IP" ]; then
             echo "Error: terraform output 'web_instance_public_ip' is empty. Ensure Terraform applied and output exists."
             terraform -chdir=terraform output || true
