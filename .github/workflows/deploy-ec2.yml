@@ -92,12 +92,18 @@ jobs:
           IP=$(terraform -chdir=terraform output -raw web_instance_public_ip 2>/dev/null || true)
           if [ -z "$IP" ]; then
             echo "Error: terraform output 'web_instance_public_ip' is empty. Ensure Terraform applied and output exists."
-            terraform -chdir=terraform output || true
+            # Show masked outputs for debugging
+            MASKED_OUTPUT=$(terraform -chdir=terraform output 2>/dev/null || true)
+            echo "Terraform outputs (masked): web_instance_public_ip=<not-set>"
+            echo "$MASKED_OUTPUT" | sed -n '1,200p'
             exit 1
           fi
           if ! printf '%s' "$IP" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' >/dev/null; then
-            echo "Error: terraform output did not return a valid IPv4 address: '$IP'"
-            terraform -chdir=terraform output || true
+            MASKED_IP=$(printf '%s' "$IP" | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+/\1.xxx/')
+            echo "Error: terraform output did not return a valid IPv4 address. Masked value: '$MASKED_IP'"
+            MASKED_OUTPUT=$(terraform -chdir=terraform output 2>/dev/null || true)
+            echo "Terraform outputs (masked):"
+            echo "$MASKED_OUTPUT" | sed -n '1,200p' | sed -E "s/([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+/\1.xxx/g"
             exit 1
           fi
           printf "[webservers]\nec2 ansible_host=%s ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key\n" "$IP" > /tmp/ansible/inventory.ini
