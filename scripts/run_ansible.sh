@@ -12,7 +12,9 @@ chmod 600 /tmp/ansible/ssh_key
 IP=""
 # dump raw terraform output for debugging (masked later)
 echo "--- Terraform raw JSON output ---"
+set +x
 terraform -chdir=terraform output -json > /tmp/terraform_output.json 2>&1 || true
+set -x
 cat /tmp/terraform_output.json || true
 
 # validate that the JSON output file contains only JSON and no surrounding text
