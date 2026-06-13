@@ -88,22 +88,30 @@ jobs:
           mkdir -p /tmp/ansible
           printf '%s\n' "$SSH_PRIVATE_KEY" > /tmp/ansible/ssh_key
           chmod 600 /tmp/ansible/ssh_key
-          # get instance IP (raw). If missing or not an IPv4, fail with helpful debug output.
-          IP=$(terraform -chdir=terraform output -raw web_instance_public_ip 2>/dev/null || true)
+          # get instance IP via terraform json output and parse safely with python
+          OUTPUT_JSON=$(terraform -chdir=terraform output -json 2>/dev/null || true)
+          IP=$(printf '%s' "$OUTPUT_JSON" | python3 - <<'PY'
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    v = data.get('web_instance_public_ip')
+    if isinstance(v, dict):
+        print(v.get('value',''))
+    else:
+        print(v or '')
+except Exception:
+    print('', end='')
+PY
+)
           if [ -z "$IP" ]; then
             echo "Error: terraform output 'web_instance_public_ip' is empty. Ensure Terraform applied and output exists."
-            # Show masked outputs for debugging
-            MASKED_OUTPUT=$(terraform -chdir=terraform output 2>/dev/null || true)
-            echo "Terraform outputs (masked): web_instance_public_ip=<not-set>"
-            echo "$MASKED_OUTPUT" | sed -n '1,200p'
+            terraform -chdir=terraform output || true
             exit 1
           fi
           if ! printf '%s' "$IP" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' >/dev/null; then
             MASKED_IP=$(printf '%s' "$IP" | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+/\1.xxx/')
             echo "Error: terraform output did not return a valid IPv4 address. Masked value: '$MASKED_IP'"
-            MASKED_OUTPUT=$(terraform -chdir=terraform output 2>/dev/null || true)
-            echo "Terraform outputs (masked):"
-            echo "$MASKED_OUTPUT" | sed -n '1,200p' | sed -E "s/([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+/\1.xxx/g"
+            terraform -chdir=terraform output || true
             exit 1
           fi
           printf "[webservers]\nec2 ansible_host=%s ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key\n" "$IP" > /tmp/ansible/inventory.ini
