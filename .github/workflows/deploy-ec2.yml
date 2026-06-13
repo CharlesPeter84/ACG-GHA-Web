@@ -58,7 +58,6 @@ jobs:
           echo "DynamoDB lock table schema is valid (LockID key found)"
 
       - name: Terraform Init
-        if: steps.changed-paths.outputs.terraform == 'true'
         working-directory: ./terraform
         run: |
           terraform init -input=false \
@@ -77,12 +76,10 @@ jobs:
         run: terraform apply -input=false -auto-approve tfplan
 
       - name: Install Ansible
-        if: steps.changed-paths.outputs.ansible == 'true'
         run: |
           python3 -m pip install --quiet ansible
 
       - name: Run Ansible playbook
-        if: steps.changed-paths.outputs.ansible == 'true'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           ANSIBLE_HOST_KEY_CHECKING: 'False'
