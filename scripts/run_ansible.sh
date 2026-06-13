@@ -11,9 +11,9 @@ chmod 600 /tmp/ansible/ssh_key
 # get instance IP via terraform output using jq or grep fallback
 IP=""
 # dump raw terraform output for debugging (masked later)
-echo "--- Terraform raw JSON output (first 200 lines) ---"
+echo "--- Terraform raw JSON output ---"
 terraform -chdir=terraform output -json > /tmp/terraform_output.json 2>&1 || true
-sed -n '1,200p' /tmp/terraform_output.json || true
+cat /tmp/terraform_output.json || true
 
 if command -v jq >/dev/null 2>&1; then
   IP=$(jq -r '.web_instance_public_ip.value // .web_instance_public_ip // ""' /tmp/terraform_output.json 2>/dev/null || true)
@@ -22,8 +22,8 @@ fi
 if [ -z "$IP" ]; then
   # fallback to raw terraform output (non-json)
   terraform -chdir=terraform output > /tmp/terraform_output_raw.txt 2>&1 || true
-  echo "--- Terraform raw text output (first 200 lines) ---"
-  sed -n '1,200p' /tmp/terraform_output_raw.txt || true
+  echo "--- Terraform raw text output ---"
+  cat /tmp/terraform_output_raw.txt || true
   IP=$(grep -Eo '([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)' /tmp/terraform_output_raw.txt | head -n1 || true)
 fi
 
