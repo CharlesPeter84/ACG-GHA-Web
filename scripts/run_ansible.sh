@@ -13,9 +13,15 @@ IP=""
 # dump raw terraform output for debugging (masked later)
 echo "--- Terraform raw JSON output ---"
 set +x
-terraform -chdir=terraform output -json > /tmp/terraform_output.json 2>&1 || true
+terraform -chdir=terraform output -json > /tmp/terraform_output.json 2> /tmp/terraform_output.err || true
 set -x
 cat /tmp/terraform_output.json || true
+
+# print any terraform stderr wrapper/debug output separately
+if [ -s /tmp/terraform_output.err ]; then
+  echo '--- Terraform stderr output ---'
+  cat /tmp/terraform_output.err || true
+fi
 
 # validate that the JSON output file contains only JSON and no surrounding text
 if ! command -v jq >/dev/null 2>&1; then
