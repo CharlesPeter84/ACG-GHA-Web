@@ -15,6 +15,22 @@ echo "--- Terraform raw JSON output ---"
 terraform -chdir=terraform output -json > /tmp/terraform_output.json 2>&1 || true
 cat /tmp/terraform_output.json || true
 
+# validate that the JSON output file contains only JSON and no surrounding text
+if ! command -v jq >/dev/null 2>&1; then
+  echo 'Error: jq is required to validate terraform JSON output.'
+  exit 1
+fi
+if ! jq -e . /tmp/terraform_output.json >/dev/null 2>&1; then
+  echo 'Error: terraform JSON output file is not pure JSON.'
+  echo '--- Terraform raw JSON output  ---'
+  cat /tmp/terraform_output.json || true
+  echo '--- Terraform raw JSON output Ends---'
+  exit 1
+fi
+
+echo '--- Terraform parsed JSON output ---'
+jq . /tmp/terraform_output.json || true
+
 if command -v jq >/dev/null 2>&1; then
   IP=$(jq -r '.web_instance_public_ip.value // .web_instance_public_ip // ""' /tmp/terraform_output.json 2>/dev/null || true)
   IP=$(printf '%s' "$IP" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' || true)
