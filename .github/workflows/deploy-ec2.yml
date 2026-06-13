@@ -5,6 +5,8 @@ on:
     branches: [ main ]
     paths:
       - 'terraform/**'
+      - 'ansible/**'
+      - 'web/**'
       - '.github/workflows/deploy-ec2.yml'
 
 jobs:
@@ -29,6 +31,17 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: Detect changed paths
+        id: changed-paths
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            ansible:
+              - 'ansible/**'
+              - 'web/**'
+            terraform:
+              - 'terraform/**'
+
       - name: Verify Terraform DynamoDB lock table schema
         run: |
           LOCK_KEY=$(aws dynamodb describe-table --table-name "${{ secrets.TF_DYNAMODB_TABLE }}" --query 'Table.KeySchema[0].AttributeName' --output text)
@@ -45,6 +58,7 @@ jobs:
           echo "DynamoDB lock table schema is valid (LockID key found)"
 
       - name: Terraform Init
+        if: steps.changed-paths.outputs.terraform == 'true'
         working-directory: ./terraform
         run: |
           terraform init -input=false \
@@ -53,9 +67,21 @@ jobs:
             -backend-config="dynamodb_table=${{ secrets.TF_DYNAMODB_TABLE }}"
 
       - name: Terraform Plan
+        if: steps.changed-paths.outputs.terraform == 'true'
         working-directory: ./terraform
         run: terraform plan -input=false -out=tfplan
 
       - name: Terraform Apply
+        if: steps.changed-paths.outputs.terraform == 'true'
         working-directory: ./terraform
         run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Install Ansible
+        if: steps.changed-paths.outputs.ansible == 'true'
+        run: |
+          python3 -m pip install --quiet ansible
+
+      - name: Run Ansible playbook
+        if: steps.changed-paths.outputs.ansible == 'true'
+        run: |
+          ansible-playbook -i "localhost," -c local ansible/playbook.yml

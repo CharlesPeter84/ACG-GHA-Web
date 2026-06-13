@@ -1,0 +1,8 @@
+- name: Deploy nginx and website content
+  hosts: webservers
+  become: true
+  vars:
+    nginx_webroot: /var/www/html
+
+  roles:
+    - nginx
