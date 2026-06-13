@@ -88,8 +88,5 @@ jobs:
           printf '%s\n' "$SSH_PRIVATE_KEY" > /tmp/ansible/ssh_key
           chmod 600 /tmp/ansible/ssh_key
           IP=$(terraform -chdir=terraform output -raw web_instance_public_ip)
-          cat > /tmp/ansible/inventory.ini <<'EOF'
-          [webservers]
-          ec2 ansible_host=$IP ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key
-          EOF
+          printf "[webservers]\nec2 ansible_host=%s ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key\n" "$IP" > /tmp/ansible/inventory.ini
           ansible-playbook -i /tmp/ansible/inventory.ini ansible/playbook.yml
