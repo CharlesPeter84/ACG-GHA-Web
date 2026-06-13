@@ -5,6 +5,14 @@ Files added:
 - terraform/main.tf
 - terraform/variables.tf
 - terraform/backend.tf
+- terraform/outputs.tf
+- ansible/playbook.yml
+- ansible/roles/nginx/tasks/main.yml
+- ansible/roles/nginx/handlers/main.yml
+- ansible/roles/nginx/templates/default.conf.j2
+- web/index.html
+- web/about.html
+- web/style.css
 - .github/workflows/deploy-ec2.yml
 
 Setup steps:
@@ -13,10 +21,11 @@ Setup steps:
    - `AWS_ACCESS_KEY_ID`
    - `AWS_SECRET_ACCESS_KEY`
    - `AWS_REGION` (e.g., `us-east-1`)
-    - `TF_S3_BUCKET` (S3 bucket to store Terraform state)
-    - `TF_DYNAMODB_TABLE` (DynamoDB table name for state locking)
+   - `TF_S3_BUCKET` (S3 bucket to store Terraform state)
+   - `TF_DYNAMODB_TABLE` (DynamoDB table name for state locking)
+   - `SSH_PRIVATE_KEY` (private key for Ansible to connect to the EC2 instance)
 
-2. (Optional) SSH access setup — choose one:
+2. SSH access setup — choose one:
 
    **Option A: Import a new SSH public key**
    
@@ -30,10 +39,15 @@ Setup steps:
    cat ~/.ssh/terraform-key.pub
    ```
    Copy the output and add it to your repository secrets.
-   
+
+   Then add the corresponding private key to GitHub secrets as `SSH_PRIVATE_KEY`:
+   ```bash
+   cat ~/.ssh/terraform-key
+   ```
+
    **Option B: Use an existing EC2 Key Pair**
    
-   Create a repository secret named `TF_VAR_ssh_key_name` with the existing key pair name (it must already exist in AWS).
+   Create a repository secret named `TF_VAR_ssh_key_name` with the existing key pair name (it must already exist in AWS), and add the matching private key as `SSH_PRIVATE_KEY`.
 
 3. Create the S3 bucket and DynamoDB table (locking) before running init. Example AWS CLI commands:
 
@@ -59,9 +73,13 @@ terraform init -backend-config="bucket=my-terraform-state-bucket" \
   -backend-config="dynamodb_table=my-terraform-locks"
 ```
 
-6. Commit and push to `main`. The workflow will use the repository secrets `TF_S3_BUCKET` and `TF_DYNAMODB_TABLE` to configure the backend during `terraform init`. The state object key is fixed to `state/terraform.tfstate`.
+6. Commit and push to `main`. The workflow will use the repository secrets `TF_S3_BUCKET`, `TF_DYNAMODB_TABLE`, and `SSH_PRIVATE_KEY` to configure the backend and run Ansible if needed. The state object key is fixed to `state/terraform.tfstate`.
 
-7. (SSH access) Once the EC2 instance is deployed with an imported public key, get the instance IP from AWS Console, then connect:
+7. Ansible behavior:
+   - The workflow runs Ansible when `ansible/**`, `web/**`, or `terraform/**` changes.
+   - Website files in `web/` are copied to `/var/www/html` only when their contents change.
+
+8. (SSH access) After deployment, retrieve the EC2 public IP from Terraform output or AWS Console, then connect:
 
 ```bash
 ssh -i ~/.ssh/terraform-key ec2-user@<instance-ip>
@@ -70,4 +88,4 @@ ssh -i ~/.ssh/terraform-key ec2-user@<instance-ip>
 Notes:
 - The workflow runs `terraform apply -auto-approve`. For production, consider requiring manual approval.
 - The backend is configured during `terraform init`; the repository does not hardcode bucket names.
-- SSH public keys are imported as variables via `TF_VAR_ssh_public_key` secret. The key name is auto-generated with a timestamp.
+- SSH public keys are imported via `TF_VAR_ssh_public_key` and the private key is provided as `SSH_PRIVATE_KEY` for Ansible.

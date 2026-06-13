@@ -83,5 +83,16 @@ jobs:
 
       - name: Run Ansible playbook
         if: steps.changed-paths.outputs.ansible == 'true'
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
         run: |
-          ansible-playbook -i "localhost," -c local ansible/playbook.yml
+          mkdir -p /tmp/ansible
+          printf '%s\n' "$SSH_PRIVATE_KEY" > /tmp/ansible/ssh_key
+          chmod 600 /tmp/ansible/ssh_key
+          IP=$(terraform -chdir=terraform output -raw web_instance_public_ip)
+          cat > /tmp/ansible/inventory.ini <<'EOF'
+          [webservers]
+          ec2 ansible_host=$IP ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key
+          EOF
+          ansible-playbook -i /tmp/ansible/inventory.ini ansible/playbook.yml
