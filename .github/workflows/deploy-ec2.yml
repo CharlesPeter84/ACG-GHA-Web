@@ -86,9 +86,15 @@ jobs:
           mkdir -p /tmp/ansible
           printf '%s\n' "$SSH_PRIVATE_KEY" > /tmp/ansible/ssh_key
           chmod 600 /tmp/ansible/ssh_key
-          # get instance IP via terraform json output and parse safely with python
-          OUTPUT_JSON=$(terraform -chdir=terraform output -json 2>/dev/null || true)
-          IP=$(printf '%s' "$OUTPUT_JSON" | python3 scripts/parse_tf_output.py)
+          # get instance IP via terraform output using jq or grep fallback
+          IP=""
+          if command -v jq >/dev/null 2>&1; then
+            IP=$(terraform -chdir=terraform output -json 2>/dev/null | jq -r '.web_instance_public_ip.value // .web_instance_public_ip // ""' | grep -Eo '^[0-9]+(\.[0-9]+){3}$' || true)
+          fi
+          if [ -z "$IP" ]; then
+            IP=$(terraform -chdir=terraform output -raw web_instance_public_ip 2>/dev/null || true)
+            IP=$(printf '%s' "$IP" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' || true)
+          fi
           if [ -z "$IP" ]; then
             echo "Error: terraform output 'web_instance_public_ip' is empty. Ensure Terraform applied and output exists."
             terraform -chdir=terraform output || true
