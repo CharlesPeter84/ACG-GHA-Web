@@ -8,6 +8,7 @@ on:
       - 'ansible/**'
       - 'web/**'
       - '.github/workflows/deploy-ec2.yml'
+  workflow_dispatch:
 
 jobs:
   terraform:
