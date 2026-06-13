@@ -35,4 +35,4 @@ cat > /tmp/ansible/inventory.ini <<EOF
 ec2 ansible_host=$IP ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key
 EOF
 
-ansible-playbook -i /tmp/ansible/inventory.ini ansible/playbook.yml -vvv
+ansible-playbook -i /tmp/ansible/inventory.ini ansible/playbook.yml
