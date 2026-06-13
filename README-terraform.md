@@ -16,7 +16,24 @@ Setup steps:
     - `TF_S3_BUCKET` (S3 bucket to store Terraform state)
     - `TF_DYNAMODB_TABLE` (DynamoDB table name for state locking)
 
-2. (Optional) If you want SSH access, create or use an existing EC2 Key Pair name and set it by creating a repository secret named `TF_VAR_ssh_key_name` or update `terraform/variables.tf`.
+2. (Optional) SSH access setup — choose one:
+
+   **Option A: Import a new SSH public key**
+   
+   Generate locally:
+   ```bash
+   ssh-keygen -t rsa -b 4096 -f ~/.ssh/terraform-key -N ""
+   ```
+   
+   Add the public key to GitHub secrets as `TF_VAR_ssh_public_key`:
+   ```bash
+   cat ~/.ssh/terraform-key.pub
+   ```
+   Copy the output and add it to your repository secrets.
+   
+   **Option B: Use an existing EC2 Key Pair**
+   
+   Create a repository secret named `TF_VAR_ssh_key_name` with the existing key pair name (it must already exist in AWS).
 
 3. Create the S3 bucket and DynamoDB table (locking) before running init. Example AWS CLI commands:
 
@@ -42,8 +59,15 @@ terraform init -backend-config="bucket=my-terraform-state-bucket" \
   -backend-config="dynamodb_table=my-terraform-locks"
 ```
 
-5. Commit and push to `main`. The workflow will use the repository secrets `TF_S3_BUCKET` and `TF_DYNAMODB_TABLE` to configure the backend during `terraform init`. The state object key is fixed to `state/terraform.tfstate`.
+6. Commit and push to `main`. The workflow will use the repository secrets `TF_S3_BUCKET` and `TF_DYNAMODB_TABLE` to configure the backend during `terraform init`. The state object key is fixed to `state/terraform.tfstate`.
+
+7. (SSH access) Once the EC2 instance is deployed with an imported public key, get the instance IP from AWS Console, then connect:
+
+```bash
+ssh -i ~/.ssh/terraform-key ec2-user@<instance-ip>
+```
 
 Notes:
 - The workflow runs `terraform apply -auto-approve`. For production, consider requiring manual approval.
 - The backend is configured during `terraform init`; the repository does not hardcode bucket names.
+- SSH public keys are imported as variables via `TF_VAR_ssh_public_key` secret. The key name is auto-generated with a timestamp.

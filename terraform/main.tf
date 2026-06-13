@@ -21,6 +21,16 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+resource "aws_key_pair" "imported" {
+  count           = var.ssh_public_key != "" ? 1 : 0
+  key_name        = "terraform-imported-key-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  public_key      = var.ssh_public_key
+
+  lifecycle {
+    ignore_changes = [key_name]
+  }
+}
+
 resource "aws_instance" "web" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
@@ -37,7 +47,7 @@ resource "aws_instance" "web" {
               systemctl start httpd
               echo "Hello from Terraform-deployed EC2" > /var/www/html/index.html
               EOF
-  key_name = var.ssh_key_name != "" ? var.ssh_key_name : null
+  key_name = var.ssh_key_name != "" ? var.ssh_key_name : (var.ssh_public_key != "" ? aws_key_pair.imported[0].key_name : null)
 
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 }

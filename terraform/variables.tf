@@ -21,3 +21,10 @@ variable "ssh_key_name" {
   type        = string
   default     = ""
 }
+
+variable "ssh_public_key" {
+  description = "(Optional) SSH public key content to import; if provided, creates a new key pair for SSH access"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
