@@ -83,6 +83,7 @@ jobs:
           echo '--- terraform_output.json ---'
           cat "${{ github.workspace }}/terraform_output.json"
           echo '--- end terraform_output.json ---'
+          jq . "${{ github.workspace }}/terraform_output.json"
 
       - name: Install Ansible
         run: |
