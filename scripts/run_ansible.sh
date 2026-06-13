@@ -32,7 +32,7 @@ fi
 
 cat > /tmp/ansible/inventory.ini <<EOF
 [webservers]
-ec2 ansible_host=$IP ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key
+ec2 ansible_host=$IP ansible_user=ec2-user ansible_private_key_file=/tmp/ansible/ssh_key ansible_python_interpreter=/usr/bin/python3
 EOF
 
 ansible-playbook -i /tmp/ansible/inventory.ini ansible/playbook.yml
