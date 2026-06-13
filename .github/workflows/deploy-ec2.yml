@@ -25,6 +25,25 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: Verify Terraform DynamoDB lock table schema
+        run: |
+          aws dynamodb describe-table --table-name "${{ secrets.TF_DYNAMODB_TABLE }}" > /tmp/dynamodb-table.json
+          python3 - <<'PY'
+          import json, sys
+          data = json.load(open('/tmp/dynamodb-table.json'))
+          key_schema = data.get('Table', {}).get('KeySchema', [])
+          if key_schema != [{'AttributeName': 'LockID', 'KeyType': 'HASH'}]:
+              print('Error: expected DynamoDB lock table key schema to be LockID HASH')
+              print('Found:', key_schema)
+              sys.exit(1)
+          attr_defs = data.get('Table', {}).get('AttributeDefinitions', [])
+          if not any(a.get('AttributeName') == 'LockID' and a.get('AttributeType') == 'S' for a in attr_defs):
+              print('Error: expected DynamoDB attribute definition LockID of type S')
+              print('Found:', attr_defs)
+              sys.exit(1)
+          print('Terraform lock table schema is valid')
+          PY
+
       - name: Terraform Init
         working-directory: ./terraform
         run: |

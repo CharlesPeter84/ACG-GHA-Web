@@ -25,7 +25,15 @@ aws s3api create-bucket --bucket my-terraform-state-bucket --region us-east-1 --
 aws dynamodb create-table --table-name my-terraform-locks --attribute-definitions AttributeName=LockID,AttributeType=S --key-schema AttributeName=LockID,KeyType=HASH --billing-mode PAY_PER_REQUEST
 ```
 
-4. Locally, initialize Terraform with backend-config values:
+4. Verify the DynamoDB lock table schema before initializing Terraform:
+
+```bash
+aws dynamodb describe-table --table-name my-terraform-locks --query 'Table.KeySchema'
+```
+
+It must return a single key schema entry with `AttributeName` set to `LockID` and `KeyType` set to `HASH`.
+
+5. Locally, initialize Terraform with backend-config values:
 
 ```bash
 cd terraform

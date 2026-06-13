@@ -3,13 +3,13 @@ set -euo pipefail
 
 usage() {
   cat <<EOF
-Usage: $0 -b BUCKET_NAME -t TABLE_NAME [-r REGION] [-p AWS_PROFILE]
+Usage: $0 [-b BUCKET_NAME] [-t TABLE_NAME] [-r REGION]
 
 Creates an S3 bucket and a DynamoDB table (idempotent). Designed for WSL Ubuntu 24.04.
 
 Options:
-  -b BUCKET_NAME    S3 bucket name (must be globally unique)
-  -t TABLE_NAME     DynamoDB table name
+  -b BUCKET_NAME    Optional base bucket name; final bucket is prefixed with ASG-GHA-Test and randomized.
+  -t TABLE_NAME     Optional base DynamoDB table name; final table is prefixed with ASG-GHA-Test and randomized.
   -r REGION         AWS region (default: us-east-1)
   -h                Show this help
 EOF
@@ -23,7 +23,7 @@ REGION=""
 PREFIX="ASG-GHA-Test"
 
 
-while getopts ":b:t:r:p:h" opt; do
+while getopts ":b:t:r:h" opt; do
   case ${opt} in
     b) BUCKET=${OPTARG} ;; 
     t) TABLE=${OPTARG} ;; 
@@ -98,8 +98,8 @@ else
   echo "Creating DynamoDB table '$TABLE_FINAL'..."
   ${AWS_CMD[@]} dynamodb create-table \
     --table-name "$TABLE_FINAL" \
-    --attribute-definitions AttributeName=Id,AttributeType=S \
-    --key-schema AttributeName=Id,KeyType=HASH \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST
   echo "Waiting for DynamoDB table to become ACTIVE..."
   ${AWS_CMD[@]} dynamodb wait table-exists --table-name "$TABLE_FINAL"
