@@ -3,17 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ACG GHA Web</title>
+  <title>BrightPath Learning Institute</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>Welcome to ACG GHA Web</h1>
-    <p>This site is deployed by Terraform and configured with Ansible.</p>
+  <header class="site-header">
+    <nav class="nav-wrap" aria-label="Primary navigation">
+      <a class="brand" href="index.html">BrightPath Learning Institute</a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="#programs">Programs</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </nav>
   </header>
+
   <main>
-    <p>When the server is running, this page is served from <code>/var/www/html</code>.</p>
-    <p><a href="about.html">Learn more</a></p>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Tuition for Classes 1 to 12</p>
+        <h1>Personal attention for stronger school results.</h1>
+        <p class="lead">We help students build clear concepts, better study habits, and exam confidence through guided tuition in core school subjects.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#contact">Book an enquiry</a>
+          <a class="button secondary" href="#programs">View programs</a>
+        </div>
+      </div>
+      <img class="hero-image" src="assets/students-study.svg" alt="Students studying with a teacher in a classroom" />
+    </section>
+
+    <section class="section intro">
+      <div>
+        <p class="eyebrow">Why families choose us</p>
+        <h2>Focused academic support from primary school to board classes.</h2>
+      </div>
+      <p>Our batches are designed for steady progress: regular practice, doubt clearing, chapter-wise revision, and test preparation aligned with each student's school curriculum.</p>
+    </section>
+
+    <section class="section" id="programs">
+      <div class="section-heading">
+        <p class="eyebrow">Programs</p>
+        <h2>Tuition plans for every stage</h2>
+      </div>
+      <div class="program-grid">
+        <article class="program-card">
+          <span class="program-level">Classes 1-5</span>
+          <h3>Foundation Learning</h3>
+          <p>Reading, writing, mathematics, environmental studies, and daily homework support with patient guidance.</p>
+        </article>
+        <article class="program-card">
+          <span class="program-level">Classes 6-8</span>
+          <h3>Concept Builder</h3>
+          <p>Structured tuition for mathematics, science, English, social studies, and school exam preparation.</p>
+        </article>
+        <article class="program-card">
+          <span class="program-level">Classes 9-10</span>
+          <h3>Board Readiness</h3>
+          <p>Chapter mastery, answer writing practice, regular tests, and revision support for board exam confidence.</p>
+        </article>
+        <article class="program-card">
+          <span class="program-level">Classes 11-12</span>
+          <h3>Senior Secondary</h3>
+          <p>Focused subject coaching for commerce and science streams with problem-solving sessions and test reviews.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section subjects">
+      <div class="section-heading">
+        <p class="eyebrow">Subjects</p>
+        <h2>Core school support</h2>
+      </div>
+      <ul class="subject-list">
+        <li>Mathematics</li>
+        <li>Science</li>
+        <li>English</li>
+        <li>Social Studies</li>
+        <li>Physics</li>
+        <li>Chemistry</li>
+        <li>Biology</li>
+        <li>Accountancy</li>
+      </ul>
+    </section>
+
+    <section class="contact-band" id="contact">
+      <div>
+        <p class="eyebrow">Admissions open</p>
+        <h2>Start with a free counselling session.</h2>
+        <p>Tell us your child's class, subjects, and learning goals. We will recommend the right tuition batch or individual support plan.</p>
+      </div>
+      <a class="button light" href="mailto:admissions@brightpath.example">Contact admissions</a>
+    </section>
   </main>
 </body>
 </html>
