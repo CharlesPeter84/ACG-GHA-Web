@@ -42,10 +42,11 @@ resource "aws_instance" "web" {
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
-              yum install -y httpd
-              systemctl enable httpd
-              systemctl start httpd
-              echo "Hello from Terraform-deployed EC2" > /var/www/html/index.html
+              if rpm -q httpd >/dev/null 2>&1; then
+                systemctl stop httpd || true
+                systemctl disable httpd || true
+                yum remove -y httpd
+              fi
               EOF
   key_name = var.ssh_key_name != "" ? var.ssh_key_name : (var.ssh_public_key != "" ? aws_key_pair.imported[0].key_name : null)
 
