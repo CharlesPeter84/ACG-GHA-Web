@@ -33,17 +33,6 @@ jobs:
           terraform_version: 1.5.7
           terraform_wrapper: false
 
-      - name: Detect changed paths
-        id: changed-paths
-        uses: dorny/paths-filter@v4
-        with:
-          filters: |
-            ansible:
-              - 'ansible/**'
-              - 'web/**'
-            terraform:
-              - 'terraform/**'
-
       - name: Verify Terraform DynamoDB lock table schema
         run: |
           LOCK_KEY=$(aws dynamodb describe-table --table-name "${{ secrets.TF_DYNAMODB_TABLE }}" --query 'Table.KeySchema[0].AttributeName' --output text)
@@ -77,13 +66,6 @@ jobs:
 
       - name: Generate Terraform JSON output
         run: terraform -chdir=terraform output -json > "${{ github.workspace }}/terraform_output.json"
-
-      - name: Print Terraform JSON output
-        run: |
-          echo '--- terraform_output.json ---'
-          cat "${{ github.workspace }}/terraform_output.json"
-          echo '--- end terraform_output.json ---'
-          jq . "${{ github.workspace }}/terraform_output.json"
 
       - name: Install Ansible
         run: |
